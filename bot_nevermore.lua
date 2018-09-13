@@ -6,19 +6,128 @@ local fountainRadius = 400.0;
 local baseURL = ":5000"
 local reply
 
-function sendState()
-	Say(hero, "Sending", false)
+function VectorToArray(v)
+	return {v.x, v.y, v.z}
+end
+
+function getHeroState(bot)
+	jsonEvent = {}
+	jsonEvent.team = bot:GetTeam()
+    jsonEvent.id   = bot:GetPlayerID() 
+    jsonEvent.type = 'hero'
+
+    ----Hero stats
+    jsonEvent.alive 	          = bot:IsAlive()
+    jsonEvent.level 		      = bot:GetLevel()
+    jsonEvent.location 		      = VectorToArray(bot:GetLocation())
+    jsonEvent.orientation 	      = bot:GetFacing()
+    jsonEvent.velocity            = VectorToArray(bot:GetVelocity())
+
+ --    jsonEvent.health              = bot:GetHealth()
+ --    jsonEvent.maxHealth           = bot:GetMaxHealth()
+ --    jsonEvent.healthRegen         = bot:GetHealthRegen()
+    
+ --    jsonEvent.mana 		          = bot:GetMana()
+ --    jsonEvent.maxMana             = bot:GetMaxMana()
+ --    jsonEvent.manaRegen           = bot:GetManaRegen()
+
+ --    jsonEvent.moveSpeed           = bot:GetCurrentMoveSpeed()
+ --    jsonEvent.visionRange         = bot:GetCurrentVisionRange()
+ --    jsonEvent.boundingRadius      = bot:GetBoundingRadius()
+
+ --    jsonEvent.attackDamage        = bot:GetAttackDamage()
+ --    jsonEvent.attackRange         = bot:GetAttackRange()
+ --    jsonEvent.attackSpeed         = bot:GetAttackSpeed()
+ --    jsonEvent.attackProjSpeed     = bot:GetAttackProjectileSpeed()
+
+ --    jsonEvent.spellAmp		      = bot:GetSpellAmp()
+ --    jsonEvent.armor 		      = bot:GetArmor()
+ --    jsonEvent.magicResist         = bot:GetMagicResist()
+ --    jsonEvent.evasion             = bot:GetEvaision()
+ --    jsonEvent.netWorth 		      = bot:GetNetWorth()
+
+ --    --Hero state
+ --    jsonEvent.isChanneling 	      = bot:IsChanneling()
+ --    jsonEvent.isUsingAbility      = bot:IsUsingAbility()
+ --    jsonEvent.isAttackImmune      = bot:IsAttackImmune()
+ --    jsonEvent.isBlind 		      = bot:isBlind()
+ --    jsonEvent.isBlockDisabled     = bot:IsBlockDisabled()
+ --    jsonEvent.isDisarmed          = bot:IsDisarmed()
+ --    jsonEvent.isEvadeDisabled     = bot:IsEvadeDisabled()
+ --    jsonEvent.isHexed             = bot:IsHexed()
+ --    jsonEvent.isInvisible         = bot:IsInvisible()
+ --    jsonEvent.isInvulnerable      = bot:IsInvulnerable()
+ --    jsonEvent.isMagicImmune       = bot:IsMagicImmune()
+ --    jsonEvent.isMuted 		      = bot:IsMuted()
+ --    jsonEvent.isNightmared        = bot:IsNightmared()
+ --    jsonEvent.isRooted 		      = bot:IsRooted()
+ --    jsonEvent.isSilenced          = bot:IsSilenced()
+ --    jsonEvent.isSpeciallyDeniable = bot:IsSpeciallyDeniable() 
+ --    jsonEvent.isStunned 		  = bot:IsStunned()
+ --    jsonEvent.isUnableToMiss 	  = bot:IsUnableToMiss()
+
+ --    GetNearbyHeroes
+
+ --    GetNearbyCreeps --1600 covers FOV of screen
+
+ --    for i = 0, 5, 1 do
+ --        item = bot:GetItemInSlot(i)
+ --        jsonEvent.item[i] = item
+ --    end
+
+ --    jsonEvent.currentAbility = ''
+ --    if bot:IsCastingAbility then
+ --    	ability = bit:GetCurrentActiveAbility()
+ --    	jsonEvent.currentAbility = ability
+ --    end
+
+	-- local trackProjectiles = npcBot:GetIncomingTrackingProjectiles()
+	-- for i, projectile in pairs(trackProjectiles) do
+	-- 	jsonEvent.incomingProjectiles[i] = projectile
+	-- end
+
+	-- --Map state
+	-- local team = bot:GetTeam()
+	-- jsonEvent.rad_top_t1 = GetTower(TEAM_RADIANT, TOWER_TOP_1)
+	-- jsonEvent.rad_top_t2 = GetTower(TEAM_RADIANT, TOWER_TOP_2)
+	-- jsonEvent.rad_top_t3 = GetTower(TEAM_RADIANT, TOWER_TOP_3)
+
+	-- jsonEvent.rad_mid_t1 = GetTower(TEAM_RADIANT, TOWER_MID_1)
+	-- jsonEvent.rad_mid_t2 = GetTower(TEAM_RADIANT, TOWER_MID_2)
+	-- jsonEvent.rad_mid_t3 = GetTower(TEAM_RADIANT, TOWER_MID_3)
+
+	-- jsonEvent.rad_bot_t1 = GetTower(TEAM_RADIANT, TOWER_BOT_1)
+	-- jsonEvent.rad_bot_t2 = GetTower(TEAM_RADIANT, TOWER_BOT_2)
+	-- jsonEvent.rad_bot_t3 = GetTower(TEAM_RADIANT, TOWER_BOT_3)
+
+	-- jsonEvent.dir_top_t1 = GetTower(TEAM_DIRE, TOWER_TOP_1)
+	-- jsonEvent.dir_top_t2 = GetTower(TEAM_DIRE, TOWER_TOP_2)
+	-- jsonEvent.dir_top_t3 = GetTower(TEAM_DIRE, TOWER_TOP_3)
+
+	-- jsonEvent.dir_mid_t1 = GetTower(TEAM_DIRE, TOWER_MID_1)
+	-- jsonEvent.dir_mid_t2 = GetTower(TEAM_DIRE, TOWER_MID_2)
+	-- jsonEvent.dir_mid_t3 = GetTower(TEAM_DIRE, TOWER_MID_3)
+
+	-- jsonEvent.dir_bot_t1 = GetTower(TEAM_DIRE, TOWER_BOT_1)
+	-- jsonEvent.dir_bot_t2 = GetTower(TEAM_DIRE, TOWER_BOT_2)
+	-- jsonEvent.dir_bot_t3 = GetTower(TEAM_DIRE, TOWER_BOT_3)
+	local json = require "game/dkjson"
+
+	-- local table = json.decode("...")
+	local string = json.encode(jsonEvent)
+
+	return string
 end
 
 function Think()
  
     local npcBot = GetBot();
- 
+ 	
     local angle = math.rad(math.fmod(npcBot:GetFacing()+30, 360)); -- Calculate next position's angle
     local newLocation = Vector(fountainLocation.x+fountainRadius*math.cos(angle), fountainLocation.y+fountainRadius*math.sin(angle), fountainLocation.z);
     npcBot:Action_MoveToLocation(newLocation);
     DebugDrawLine(fountainLocation, newLocation, 255, 0, 0);
-
+    
     local badProjectiles = GetLinearProjectiles()
     for _, projectile in pairs(badProjectiles) do
 		DebugDrawCircle(projectile.location, projectile.radius, 255, 0 , 0)
@@ -33,8 +142,11 @@ function Think()
  	
  	-- local chat = baseURL .. "/CreepBlockAI/model"
  	-- npcBot:ActionImmediate_Chat(chat, true)
- 	request = CreateHTTPRequest(baseURL .. "/CreepBlockAI/model")
+ 	request = CreateHTTPRequest(baseURL .. "/update")
  	
+ 	jsonMsg = getHeroState(npcBot)
+
+ 	request:SetHTTPRequestRawPostBody('application/json', jsonMsg)
 	request:Send( 	
 					function( result ) 
 						if result["StatusCode"] == 200 then

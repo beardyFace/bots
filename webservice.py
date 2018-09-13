@@ -1,26 +1,14 @@
 from flask import Flask, jsonify, request
-# from ActorCritic import Model
+from dota2AI import BotAI
 
 app = Flask(__name__)
 
-@app.route('/CreepBlockAI/model', methods=['POST'])
-def get_model():
-    return jsonify({})
+bot = BotAI()
 
-@app.route('/CreepBlockAI/update', methods=['POST'])
+@app.route('/update', methods=['POST'])
 def update():
-    print("update")
-    return jsonify({})
-    
-@app.route('/CreepBlockAI/dump', methods=['GET'])
-def dump():
-    print("dump")
-    return jsonify({})
-    
-@app.route('/CreepBlockAI/load', methods=['POST'])
-def load():
-    print("load")
-    return jsonify({})
+    bot.update_state(request.json)
+    return jsonify(bot.next_action())
     
 if __name__ == '__main__':  
     app.run()
