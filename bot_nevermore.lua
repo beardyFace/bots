@@ -10,6 +10,66 @@ function VectorToArray(v)
 	return {v.x, v.y, v.z}
 end
 
+function getRaxState(team, rax_id)
+	--determine if rax state has changed so we don't send data every single time step
+	rax = GetBarracks(team, rax_id)--hUnit
+end
+
+function getRaxStates()
+	raxes = {}
+
+	return raxes
+end
+
+function getTowerState(team, tower_id)
+	tower = GetTower(team, tower_id)--hUnit
+
+	towerState = {}
+	towerState.team = tower:GetTeam()
+	towerState.type = 'tower'
+
+	towerState.alive    = tower:IsAlive()
+	towerState.health   = tower:GetHealth()
+	towerState.location = VectorToArray(tower:GetLocation())
+
+	return towerState
+end
+
+function getTowerStates()
+	--determine if tower state has changed so we don't send data every single time step
+	towers = {}
+
+	towers[0]  = getTowerState(TEAM_RADIANT, TOWER_TOP_1)
+	towers[1]  = getTowerState(TEAM_RADIANT, TOWER_TOP_2)
+	towers[2]  = getTowerState(TEAM_RADIANT, TOWER_TOP_3)
+
+	towers[3]  = getTowerState(TEAM_RADIANT, TOWER_MID_1)
+	towers[4]  = getTowerState(TEAM_RADIANT, TOWER_MID_2)
+	towers[5]  = getTowerState(TEAM_RADIANT, TOWER_MID_3)
+
+	towers[6]  = getTowerState(TEAM_RADIANT, TOWER_BOT_1)
+	towers[7]  = getTowerState(TEAM_RADIANT, TOWER_BOT_2)
+	towers[8]  = getTowerState(TEAM_RADIANT, TOWER_BOT_3)
+
+	towers[9]  = getTowerState(TEAM_DIRE, TOWER_TOP_1)
+	towers[10] = getTowerState(TEAM_DIRE, TOWER_TOP_2)
+	towers[11] = getTowerState(TEAM_DIRE, TOWER_TOP_3)
+
+	towers[12] = getTowerState(TEAM_DIRE, TOWER_MID_1)
+	towers[13] = getTowerState(TEAM_DIRE, TOWER_MID_2)
+	towers[14] = getTowerState(TEAM_DIRE, TOWER_MID_3)
+
+	towers[15] = getTowerState(TEAM_DIRE, TOWER_BOT_1)
+	towers[16] = getTowerState(TEAM_DIRE, TOWER_BOT_2)
+	towers[17] = getTowerState(TEAM_DIRE, TOWER_BOT_3)
+
+	return towers
+end
+
+function getCreepState(team)
+
+end
+
 function getHeroState(bot)
 	jsonEvent = {}
 	jsonEvent.team = bot:GetTeam()
@@ -23,52 +83,48 @@ function getHeroState(bot)
     jsonEvent.orientation 	      = bot:GetFacing()
     jsonEvent.velocity            = VectorToArray(bot:GetVelocity())
 
- --    jsonEvent.health              = bot:GetHealth()
- --    jsonEvent.maxHealth           = bot:GetMaxHealth()
- --    jsonEvent.healthRegen         = bot:GetHealthRegen()
+    jsonEvent.health              = bot:GetHealth()
+    jsonEvent.maxHealth           = bot:GetMaxHealth()
+    jsonEvent.healthRegen         = bot:GetHealthRegen()
     
- --    jsonEvent.mana 		          = bot:GetMana()
- --    jsonEvent.maxMana             = bot:GetMaxMana()
- --    jsonEvent.manaRegen           = bot:GetManaRegen()
+    jsonEvent.mana 		          = bot:GetMana()
+    jsonEvent.maxMana             = bot:GetMaxMana()
+    jsonEvent.manaRegen           = bot:GetManaRegen()
 
- --    jsonEvent.moveSpeed           = bot:GetCurrentMoveSpeed()
- --    jsonEvent.visionRange         = bot:GetCurrentVisionRange()
- --    jsonEvent.boundingRadius      = bot:GetBoundingRadius()
+    jsonEvent.moveSpeed           = bot:GetCurrentMoveSpeed()
+    jsonEvent.visionRange         = bot:GetCurrentVisionRange()
+    jsonEvent.boundingRadius      = bot:GetBoundingRadius()
 
- --    jsonEvent.attackDamage        = bot:GetAttackDamage()
- --    jsonEvent.attackRange         = bot:GetAttackRange()
- --    jsonEvent.attackSpeed         = bot:GetAttackSpeed()
- --    jsonEvent.attackProjSpeed     = bot:GetAttackProjectileSpeed()
+    jsonEvent.attackDamage        = bot:GetAttackDamage()
+    jsonEvent.attackRange         = bot:GetAttackRange()
+    jsonEvent.attackSpeed         = bot:GetAttackSpeed()
+    jsonEvent.attackProjSpeed     = bot:GetAttackProjectileSpeed()
 
- --    jsonEvent.spellAmp		      = bot:GetSpellAmp()
- --    jsonEvent.armor 		      = bot:GetArmor()
- --    jsonEvent.magicResist         = bot:GetMagicResist()
- --    jsonEvent.evasion             = bot:GetEvaision()
- --    jsonEvent.netWorth 		      = bot:GetNetWorth()
+    jsonEvent.spellAmp		      = bot:GetSpellAmp()
+    jsonEvent.armor 		      = bot:GetArmor()
+    jsonEvent.magicResist         = bot:GetMagicResist()
+    jsonEvent.evasion             = bot:GetEvaision()
+    jsonEvent.netWorth 		      = bot:GetNetWorth()
 
- --    --Hero state
- --    jsonEvent.isChanneling 	      = bot:IsChanneling()
- --    jsonEvent.isUsingAbility      = bot:IsUsingAbility()
- --    jsonEvent.isAttackImmune      = bot:IsAttackImmune()
- --    jsonEvent.isBlind 		      = bot:isBlind()
- --    jsonEvent.isBlockDisabled     = bot:IsBlockDisabled()
- --    jsonEvent.isDisarmed          = bot:IsDisarmed()
- --    jsonEvent.isEvadeDisabled     = bot:IsEvadeDisabled()
- --    jsonEvent.isHexed             = bot:IsHexed()
- --    jsonEvent.isInvisible         = bot:IsInvisible()
- --    jsonEvent.isInvulnerable      = bot:IsInvulnerable()
- --    jsonEvent.isMagicImmune       = bot:IsMagicImmune()
- --    jsonEvent.isMuted 		      = bot:IsMuted()
- --    jsonEvent.isNightmared        = bot:IsNightmared()
- --    jsonEvent.isRooted 		      = bot:IsRooted()
- --    jsonEvent.isSilenced          = bot:IsSilenced()
- --    jsonEvent.isSpeciallyDeniable = bot:IsSpeciallyDeniable() 
- --    jsonEvent.isStunned 		  = bot:IsStunned()
- --    jsonEvent.isUnableToMiss 	  = bot:IsUnableToMiss()
-
- --    GetNearbyHeroes
-
- --    GetNearbyCreeps --1600 covers FOV of screen
+    --Hero state
+    jsonEvent.isChanneling 	      = bot:IsChanneling()
+    jsonEvent.isUsingAbility      = bot:IsUsingAbility()
+    jsonEvent.isAttackImmune      = bot:IsAttackImmune()
+    jsonEvent.isBlind 		      = bot:isBlind()
+    jsonEvent.isBlockDisabled     = bot:IsBlockDisabled()
+    jsonEvent.isDisarmed          = bot:IsDisarmed()
+    jsonEvent.isEvadeDisabled     = bot:IsEvadeDisabled()
+    jsonEvent.isHexed             = bot:IsHexed()
+    jsonEvent.isInvisible         = bot:IsInvisible()
+    jsonEvent.isInvulnerable      = bot:IsInvulnerable()
+    jsonEvent.isMagicImmune       = bot:IsMagicImmune()
+    jsonEvent.isMuted 		      = bot:IsMuted()
+    jsonEvent.isNightmared        = bot:IsNightmared()
+    jsonEvent.isRooted 		      = bot:IsRooted()
+    jsonEvent.isSilenced          = bot:IsSilenced()
+    jsonEvent.isSpeciallyDeniable = bot:IsSpeciallyDeniable() 
+    jsonEvent.isStunned 		  = bot:IsStunned()
+    jsonEvent.isUnableToMiss 	  = bot:IsUnableToMiss()
 
  --    for i = 0, 5, 1 do
  --        item = bot:GetItemInSlot(i)
@@ -86,31 +142,6 @@ function getHeroState(bot)
 	-- 	jsonEvent.incomingProjectiles[i] = projectile
 	-- end
 
-	-- --Map state
-	-- local team = bot:GetTeam()
-	-- jsonEvent.rad_top_t1 = GetTower(TEAM_RADIANT, TOWER_TOP_1)
-	-- jsonEvent.rad_top_t2 = GetTower(TEAM_RADIANT, TOWER_TOP_2)
-	-- jsonEvent.rad_top_t3 = GetTower(TEAM_RADIANT, TOWER_TOP_3)
-
-	-- jsonEvent.rad_mid_t1 = GetTower(TEAM_RADIANT, TOWER_MID_1)
-	-- jsonEvent.rad_mid_t2 = GetTower(TEAM_RADIANT, TOWER_MID_2)
-	-- jsonEvent.rad_mid_t3 = GetTower(TEAM_RADIANT, TOWER_MID_3)
-
-	-- jsonEvent.rad_bot_t1 = GetTower(TEAM_RADIANT, TOWER_BOT_1)
-	-- jsonEvent.rad_bot_t2 = GetTower(TEAM_RADIANT, TOWER_BOT_2)
-	-- jsonEvent.rad_bot_t3 = GetTower(TEAM_RADIANT, TOWER_BOT_3)
-
-	-- jsonEvent.dir_top_t1 = GetTower(TEAM_DIRE, TOWER_TOP_1)
-	-- jsonEvent.dir_top_t2 = GetTower(TEAM_DIRE, TOWER_TOP_2)
-	-- jsonEvent.dir_top_t3 = GetTower(TEAM_DIRE, TOWER_TOP_3)
-
-	-- jsonEvent.dir_mid_t1 = GetTower(TEAM_DIRE, TOWER_MID_1)
-	-- jsonEvent.dir_mid_t2 = GetTower(TEAM_DIRE, TOWER_MID_2)
-	-- jsonEvent.dir_mid_t3 = GetTower(TEAM_DIRE, TOWER_MID_3)
-
-	-- jsonEvent.dir_bot_t1 = GetTower(TEAM_DIRE, TOWER_BOT_1)
-	-- jsonEvent.dir_bot_t2 = GetTower(TEAM_DIRE, TOWER_BOT_2)
-	-- jsonEvent.dir_bot_t3 = GetTower(TEAM_DIRE, TOWER_BOT_3)
 	local json = require "game/dkjson"
 
 	-- local table = json.decode("...")
@@ -119,15 +150,45 @@ function getHeroState(bot)
 	return string
 end
 
+function getHeroes(unit_type)
+	-- UNIT_LIST_ALLIED_HEROES
+	heroesMsg = {}
+	heroes = GetUnitList(unit_type)
+	for i, hero in pairs(heroes) do
+		heroesMsg[i] = getHeroState(hero)
+	end
+	return heroesMsg
+end
+
+function getCreeps(unit_type)
+	creepMsg = {}
+	creeps = GetUnitList(unit_type)
+	for i, creep in pairs(creeps) do
+		creepMsg[i] = getCreepState(creep)
+	end
+	return creepMsg
+end
+
+function getState(bot)
+	jsonEvent = {}
+
+	jsonEvent['hero'] 		 = getHeroState(bot)
+	jsonEvent['ally_hero']   = getHeroes(UNIT_LIST_ALLIED_HEROES)
+	jsonEvent['enemy_hero']  = getHeroes(UNIT_LIST_ENEMY_HEROES)
+	jsonEvent['buildings']   = getBuildings()
+	jsonEvent['ally_creep']  = getCreeps(UNIT_LIST_ALLIED_CREEPS)
+	jsonEvent['enemy_creep'] = getCreeps(UNIT_LIST_ENEMY_CREEPS)
+	
+	-- local table = json.decode("...")
+	local json = require "game/dkjson"
+	local string = json.encode(jsonEvent)
+	return string
+end
+
 function Think()
  
-    local npcBot = GetBot();
+    local npcBot = GetBot();--hUnit
  	
-    local angle = math.rad(math.fmod(npcBot:GetFacing()+30, 360)); -- Calculate next position's angle
-    local newLocation = Vector(fountainLocation.x+fountainRadius*math.cos(angle), fountainLocation.y+fountainRadius*math.sin(angle), fountainLocation.z);
-    npcBot:Action_MoveToLocation(newLocation);
-    DebugDrawLine(fountainLocation, newLocation, 255, 0, 0);
-    
     local badProjectiles = GetLinearProjectiles()
     for _, projectile in pairs(badProjectiles) do
 		DebugDrawCircle(projectile.location, projectile.radius, 255, 0 , 0)
@@ -144,7 +205,7 @@ function Think()
  	-- npcBot:ActionImmediate_Chat(chat, true)
  	request = CreateHTTPRequest(baseURL .. "/update")
  	
- 	jsonMsg = getHeroState(npcBot)
+ 	jsonMsg = getState(npcBot)
 
  	request:SetHTTPRequestRawPostBody('application/json', jsonMsg)
 	request:Send( 	
@@ -164,192 +225,9 @@ function Think()
 		npcBot:ActionImmediate_Chat("Replied: ", false)	
 		reply = nil
 	end
-end
- 
---------------------------------------------------------------------------------
+end 
 
-
--- This file contains functions that serialise game entities into JSON 
-
--- function Dota2AI:JSONChat(event)	
--- 	jsonEvent = {}
--- 	jsonEvent.teamOnly = event.teamonly -- we should probably test one day if the bot is on the same team
---     jsonEvent.player = event.userid
---     jsonEvent.text = event.text
-
--- 	return package.loaded['game/dkjson'].encode(jsonEvent)
--- end
-
---  function Dota2AI:JSONtree(eTree)	
--- 	local tree = {}
--- 	tree.origin = VectorToArray(eTree:GetOrigin())
--- 	tree.type = "Tree"
--- 	return tree
---  end
- 
---  function Dota2AI:JSONunit(eUnit)	
--- 	local unit = {}
--- 	unit.level = eUnit:GetLevel()
--- 	unit.origin = VectorToArray(eUnit:GetOrigin())
--- 	--unit.absOrigin = VectorToArray(eUnit:GetAbsOrigin())
--- 	--unit.center = VectorToArray(eUnit:GetCenter())
--- 	--unit.velocity = VectorToArray(eUnit:GetVelocity())
--- 	--unit.localVelocity = VectorToArray(eUnit:GetForwardVector())
--- 	unit.health = eUnit:GetHealth()
--- 	unit.maxHealth = eUnit:GetMaxHealth()
--- 	unit.mana = eUnit:GetMana()
--- 	unit.maxMana = eUnit:GetMaxMana()
--- 	unit.alive = eUnit:IsAlive()
--- 	unit.blind = eUnit:IsBlind()	
--- 	unit.dominated = eUnit:IsDominated()
--- 	unit.deniable = eUnit:IsDeniable()
--- 	unit.disarmed = eUnit:IsDisarmed()
--- 	unit.rooted = eUnit:IsRooted()
--- 	unit.name = eUnit:GetName()
--- 	unit.team = eUnit:GetTeamNumber()
--- 	unit.attackRange = eUnit:GetAttackRange()	
-	
--- 	if eUnit:IsHero() then
--- 		unit.gold = eUnit:GetGold()
--- 		unit.type = "Hero"
--- 		unit.xp = eUnit:GetCurrentXP()
--- 		unit.deaths = eUnit:GetDeaths()
--- 		unit.denies = eUnit:GetDenies()
-		
--- 		-- Abilities are actually in CBaseNPC, but we'll just send them for Heros to avoid cluttering the JSON--
--- 		unit.abilities = {}
--- 		local abilityCount = eUnit:GetAbilityCount() - 1 --minus 1 because lua for loops are upper boundary inclusive
-		
--- 		for index=0,abilityCount,1 do			
--- 			local eAbility = eUnit:GetAbilityByIndex(index)
--- 			-- abilityCount returned 16 for me even though the hero had only 5 slots (maybe it's actually max slots?). We fix that by checking for null pointer
--- 			if eAbility then
--- 				unit.abilities[index] = {}
--- 				unit.abilities[index].type = "Ability"
--- 				unit.abilities[index].name = eAbility:GetAbilityName()
--- 				unit.abilities[index].targetFlags = eAbility:GetAbilityTargetFlags()
--- 				unit.abilities[index].targetTeam = eAbility:GetAbilityTargetTeam()
--- 				unit.abilities[index].targetType = eAbility:GetAbilityTargetType()
--- 				unit.abilities[index].abilityType = eAbility:GetAbilityType()
--- 				unit.abilities[index].abilityIndex = eAbility:GetAbilityIndex()
--- 				unit.abilities[index].level = eAbility:GetLevel()				
--- 				unit.abilities[index].maxLevel = eAbility:GetMaxLevel()
--- 				unit.abilities[index].abilityDamage = eAbility:GetAbilityDamage()
--- 				unit.abilities[index].abilityDamageType = eAbility:GetAbilityDamage()
--- 				unit.abilities[index].cooldownTime = eAbility:GetCooldownTime()
--- 				unit.abilities[index].cooldownTimeRemaining = eAbility:GetCooldownTimeRemaining()
--- 			end
--- 		end
--- 	elseif eUnit:IsBuilding() then
--- 		if eUnit:IsTower() then
--- 			unit.type = "Tower"
--- 		else
--- 			unit.type = "Building"
--- 		end
--- 	else
--- 		unit.type = "BaseNPC"
--- 	end
-	
-	
--- 	local attackTarget = eUnit:GetAttackTarget()
--- 	if attackTarget then
--- 		unit.attackTarget = attackTarget:entindex()
--- 	end
-	
--- 	return unit
---  end
- 
--- -- At the moment, we serialise the whole game state visible to a team
--- -- a future TODO would be only sending those entities that have changed 
--- function Dota2AI:JSONWorld(eHero)	
--- 	local world = {}
--- 	world.entities = {}
-	
-
--- 	--there are apparently around 2300 trees on the map. Sending those that are NOT standing is much more efficient
--- 	--TODO provide the client with a list of tree entities at the beginning of the match
--- 	local tree = Entities:FindByClassname(nil, "ent_dota_tree")
--- 	while tree ~= nil do
--- 		if eHero:CanEntityBeSeenByMyTeam(tree) and not tree:IsStanding() then
--- 			world.entities[tree:entindex()]=self:JSONtree(tree)
--- 		end		
--- 		tree = Entities:FindByClassname(tree, "ent_dota_tree")
--- 	end
-
-	
--- 	local allUnits = FindUnitsInRadius(eHero:GetTeamNumber(), 
---                               eHero:GetOrigin(),
---                               nil,
---                               FIND_UNITS_EVERYWHERE,
---                               DOTA_UNIT_TARGET_TEAM_BOTH,
---                               DOTA_UNIT_TARGET_ALL,
---                               DOTA_UNIT_TARGET_FLAG_FOW_VISIBLE,
---                               FIND_ANY_ORDER,
---                               true)
-							 
--- 	for _,unit in pairs(allUnits) do
--- 		world.entities[unit:entindex()]=self:JSONunit(unit)
--- 	end
-	
--- 	--so FindUnitsInRadius somehow ignores all the buildings
--- 	local buildings = {}
--- 	buildings[0] =  Entities:FindByName(nil, "dota_goodguys_tower1_bot")
--- 	buildings[1] =  Entities:FindByName(nil, "dota_goodguys_tower2_bot")
--- 	buildings[2] =  Entities:FindByName(nil, "dota_goodguys_tower3_bot")
-	
--- 	buildings[3] =  Entities:FindByName(nil, "dota_goodguys_tower1_mid")
--- 	buildings[4] =  Entities:FindByName(nil, "dota_goodguys_tower2_mid")
--- 	buildings[5] =  Entities:FindByName(nil, "dota_goodguys_tower3_mid")
-	
--- 	buildings[6] =  Entities:FindByName(nil, "dota_goodguys_tower1_top")
--- 	buildings[7] =  Entities:FindByName(nil, "dota_goodguys_tower2_top")
--- 	buildings[8] =  Entities:FindByName(nil, "dota_goodguys_tower3_top")
-	
--- 	buildings[9] =  Entities:FindByName(nil, "dota_goodguys_tower4_top")
--- 	buildings[10] =  Entities:FindByName(nil, "dota_goodguys_tower4_bot")
-	
--- 	buildings[11] =  Entities:FindByName(nil, "good_rax_melee_bot")
--- 	buildings[12] =  Entities:FindByName(nil, "good_rax_range_bot")
--- 	buildings[13] =  Entities:FindByName(nil, "good_rax_melee_mid")
--- 	buildings[14] =  Entities:FindByName(nil, "good_rax_range_mid")
--- 	buildings[15] =  Entities:FindByName(nil, "good_rax_melee_top")
--- 	buildings[16] =  Entities:FindByName(nil, "good_rax_range_top")
-	
--- 	buildings[17] =  Entities:FindByName(nil, "ent_dota_fountain_good")
-	
--- 	--dire
--- 	buildings[18] =  Entities:FindByName(nil, "dota_badguys_tower1_bot")
--- 	buildings[19] =  Entities:FindByName(nil, "dota_badguys_tower2_bot")
--- 	buildings[20] =  Entities:FindByName(nil, "dota_badguys_tower3_bot")
-	
--- 	buildings[21] =  Entities:FindByName(nil, "dota_badguys_tower1_mid")
--- 	buildings[22] =  Entities:FindByName(nil, "dota_badguys_tower2_mid")
--- 	buildings[23] =  Entities:FindByName(nil, "dota_badguys_tower3_mid")
-	
--- 	buildings[24] =  Entities:FindByName(nil, "dota_badguys_tower1_top")
--- 	buildings[25] =  Entities:FindByName(nil, "dota_badguys_tower2_top")
--- 	buildings[26] =  Entities:FindByName(nil, "dota_badguys_tower3_top")
-	
--- 	buildings[27] =  Entities:FindByName(nil, "dota_badguys_tower4_top")
--- 	buildings[28] =  Entities:FindByName(nil, "dota_badguys_tower4_bot")
-	
--- 	buildings[29] =  Entities:FindByName(nil, "bad_rax_melee_bot")
--- 	buildings[30] =  Entities:FindByName(nil, "bad_rax_range_bot")
--- 	buildings[31] =  Entities:FindByName(nil, "bad_rax_melee_mid")
--- 	buildings[32] =  Entities:FindByName(nil, "bad_rax_range_mid")
--- 	buildings[33] =  Entities:FindByName(nil, "bad_rax_melee_top")
--- 	buildings[34] =  Entities:FindByName(nil, "bad_rax_range_top")
-	
--- 	buildings[35] =  Entities:FindByName(nil, "ent_dota_fountain_bad")
-	
-	
--- 	for i,unit in ipairs(buildings) do
--- 		world.entities[unit:entindex()]=self:JSONunit(unit)
--- 	end
-	
--- 	return package.loaded['game/dkjson'].encode(world)
--- end 
- 
---  function VectorToArray(v)
--- 	return {v.x, v.y, v.z}
---  end
+-- local angle = math.rad(math.fmod(npcBot:GetFacing()+30, 360)); -- Calculate next position's angle
+-- local newLocation = Vector(fountainLocation.x+fountainRadius*math.cos(angle), fountainLocation.y+fountainRadius*math.sin(angle), fountainLocation.z);
+-- npcBot:Action_MoveToLocation(newLocation);
+-- DebugDrawLine(fountainLocation, newLocation, 255, 0, 0);
