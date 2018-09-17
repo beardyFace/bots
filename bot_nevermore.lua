@@ -12,17 +12,17 @@ end
 
 function getRaxState(team, rax_id)
 	--determine if rax state has changed so we don't send data every single time step
-	rax = GetBarracks(team, rax_id)--hUnit
+	local rax = GetBarracks(team, rax_id)--hUnit
 end
 
 function getRaxStates()
-	raxes = {}
+	local raxes = {}
 
 	return raxes
 end
 
 function getTowerState(team, tower_id)
-	tower = GetTower(team, tower_id)--hUnit
+	local tower = GetTower(team, tower_id)--hUnit
 
 	towerState = {}
 	towerState.team = tower:GetTeam()
@@ -37,7 +37,7 @@ end
 
 function getTowerStates()
 	--determine if tower state has changed so we don't send data every single time step
-	towers = {}
+	local towers = {}
 
 	towers[0]  = getTowerState(TEAM_RADIANT, TOWER_TOP_1)
 	towers[1]  = getTowerState(TEAM_RADIANT, TOWER_TOP_2)
@@ -66,12 +66,12 @@ function getTowerStates()
 	return towers
 end
 
-function getCreepState(team)
-
+function getBuildings()
+	
 end
 
 function getHeroState(bot)
-	jsonEvent = {}
+	local jsonEvent = {}
 	jsonEvent.team = bot:GetTeam()
     jsonEvent.id   = bot:GetPlayerID() 
     jsonEvent.type = 'hero'
@@ -91,7 +91,7 @@ function getHeroState(bot)
     jsonEvent.maxMana             = bot:GetMaxMana()
     jsonEvent.manaRegen           = bot:GetManaRegen()
 
-    jsonEvent.moveSpeed           = bot:GetCurrentMoveSpeed()
+    jsonEvent.moveSpeed           = bot:GetCurrentMovementSpeed()
     jsonEvent.visionRange         = bot:GetCurrentVisionRange()
     jsonEvent.boundingRadius      = bot:GetBoundingRadius()
 
@@ -103,14 +103,14 @@ function getHeroState(bot)
     jsonEvent.spellAmp		      = bot:GetSpellAmp()
     jsonEvent.armor 		      = bot:GetArmor()
     jsonEvent.magicResist         = bot:GetMagicResist()
-    jsonEvent.evasion             = bot:GetEvaision()
+    jsonEvent.evasion             = bot:GetEvasion()
     jsonEvent.netWorth 		      = bot:GetNetWorth()
 
     --Hero state
     jsonEvent.isChanneling 	      = bot:IsChanneling()
     jsonEvent.isUsingAbility      = bot:IsUsingAbility()
     jsonEvent.isAttackImmune      = bot:IsAttackImmune()
-    jsonEvent.isBlind 		      = bot:isBlind()
+    jsonEvent.isBlind 		      = bot:IsBlind()
     jsonEvent.isBlockDisabled     = bot:IsBlockDisabled()
     jsonEvent.isDisarmed          = bot:IsDisarmed()
     jsonEvent.isEvadeDisabled     = bot:IsEvadeDisabled()
@@ -152,17 +152,21 @@ end
 
 function getHeroes(unit_type)
 	-- UNIT_LIST_ALLIED_HEROES
-	heroesMsg = {}
-	heroes = GetUnitList(unit_type)
+	local heroesMsg = {}
+	local heroes = GetUnitList(unit_type)
 	for i, hero in pairs(heroes) do
 		heroesMsg[i] = getHeroState(hero)
 	end
 	return heroesMsg
 end
 
+function getCreepState(team)
+
+end
+
 function getCreeps(unit_type)
-	creepMsg = {}
-	creeps = GetUnitList(unit_type)
+	local creepMsg = {}
+	local creeps = GetUnitList(unit_type)
 	for i, creep in pairs(creeps) do
 		creepMsg[i] = getCreepState(creep)
 	end
@@ -170,14 +174,14 @@ function getCreeps(unit_type)
 end
 
 function getState(bot)
-	jsonEvent = {}
+	local jsonEvent = {}
 
 	jsonEvent['hero'] 		 = getHeroState(bot)
 	jsonEvent['ally_hero']   = getHeroes(UNIT_LIST_ALLIED_HEROES)
 	jsonEvent['enemy_hero']  = getHeroes(UNIT_LIST_ENEMY_HEROES)
-	jsonEvent['buildings']   = getBuildings()
-	jsonEvent['ally_creep']  = getCreeps(UNIT_LIST_ALLIED_CREEPS)
-	jsonEvent['enemy_creep'] = getCreeps(UNIT_LIST_ENEMY_CREEPS)
+	-- jsonEvent['buildings']   = getBuildings()
+	-- jsonEvent['ally_creep']  = getCreeps(UNIT_LIST_ALLIED_CREEPS)
+	-- jsonEvent['enemy_creep'] = getCreeps(UNIT_LIST_ENEMY_CREEPS)
 	
 	-- local table = json.decode("...")
 	local json = require "game/dkjson"
@@ -203,9 +207,9 @@ function Think()
  	
  	-- local chat = baseURL .. "/CreepBlockAI/model"
  	-- npcBot:ActionImmediate_Chat(chat, true)
- 	request = CreateHTTPRequest(baseURL .. "/update")
+ 	local request = CreateHTTPRequest(baseURL .. "/update")
  	
- 	jsonMsg = getState(npcBot)
+ 	local jsonMsg = getState(npcBot)
 
  	request:SetHTTPRequestRawPostBody('application/json', jsonMsg)
 	request:Send( 	
