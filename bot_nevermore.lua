@@ -1,7 +1,5 @@
 local fountainLocation = Vector(0, 0, 384.0);
 local fountainRadius = 400.0;
- 
---------------------------------------------------------------------------------
 
 local baseURL = ":5000"
 local reply
@@ -10,13 +8,59 @@ function VectorToArray(v)
 	return {v.x, v.y, v.z}
 end
 
+function getCreepState(creep)
+	--determine if rax state has changed so we don't send data every single time step
+	local creepState = {}
+	creepState.team = creep:GetTeam()
+	creepState.type = 'rax'
+
+	creepState.alive    = creep:IsAlive()
+	creepState.health   = creep:GetHealth()
+	creepState.location = VectorToArray(creep:GetLocation())--wont change, maybe send once?
+
+	return creepState
+end
+
+function getCreeps(unit_type)
+	local creepMsg = {}
+	local creeps = GetUnitList(unit_type)
+	for i, creep in pairs(creeps) do
+		creepMsg[i] = getCreepState(creep)
+	end
+	return creepMsg
+end
+
 function getRaxState(team, rax_id)
 	--determine if rax state has changed so we don't send data every single time step
 	local rax = GetBarracks(team, rax_id)--hUnit
+
+	local raxState = {}
+	raxState.team = rax:GetTeam()
+	raxState.type = 'rax'
+
+	raxState.alive    = rax:IsAlive()
+	raxState.health   = rax:GetHealth()
+	raxState.location = VectorToArray(rax:GetLocation())--wont change, maybe send once?
+
+	return raxState
 end
 
 function getRaxStates()
 	local raxes = {}
+
+	raxes[0]  = GetBarracks(TEAM_RADIANT, BARRACKS_TOP_MELEE)
+	raxes[1]  = GetBarracks(TEAM_RADIANT, BARRACKS_TOP_RANGED)
+	raxes[2]  = GetBarracks(TEAM_RADIANT, BARRACKS_MID_MELEE)
+	raxes[3]  = GetBarracks(TEAM_RADIANT, BARRACKS_MID_RANGED)
+	raxes[4]  = GetBarracks(TEAM_RADIANT, BARRACKS_BOT_MELEE)
+	raxes[5]  = GetBarracks(TEAM_RADIANT, BARRACKS_BOT_RANGED)
+
+	raxes[6]  = GetBarracks(TEAM_DIRE, BARRACKS_TOP_MELEE)
+	raxes[7]  = GetBarracks(TEAM_DIRE, BARRACKS_TOP_RANGED)
+	raxes[8]  = GetBarracks(TEAM_DIRE, BARRACKS_MID_MELEE)
+	raxes[9]  = GetBarracks(TEAM_DIRE, BARRACKS_MID_RANGED)
+	raxes[10] = GetBarracks(TEAM_DIRE, BARRACKS_BOT_MELEE)
+	raxes[11] = GetBarracks(TEAM_DIRE, BARRACKS_BOT_RANGED)
 
 	return raxes
 end
@@ -24,13 +68,13 @@ end
 function getTowerState(team, tower_id)
 	local tower = GetTower(team, tower_id)--hUnit
 
-	towerState = {}
+	local towerState = {}
 	towerState.team = tower:GetTeam()
 	towerState.type = 'tower'
 
 	towerState.alive    = tower:IsAlive()
 	towerState.health   = tower:GetHealth()
-	towerState.location = VectorToArray(tower:GetLocation())
+	towerState.location = VectorToArray(tower:GetLocation())--wont change, maybe send once?
 
 	return towerState
 end
@@ -126,10 +170,18 @@ function getHeroState(bot)
     jsonEvent.isStunned 		  = bot:IsStunned()
     jsonEvent.isUnableToMiss 	  = bot:IsUnableToMiss()
 
- --    for i = 0, 5, 1 do
- --        item = bot:GetItemInSlot(i)
- --        jsonEvent.item[i] = item
- --    end
+    local items = {}
+    for i = 0, 5, 1 do
+    	item = bot:GetItemInSlot(i)
+    	item_msg = {}
+        item_msg['name']         = item:GetName()
+        item_msg['mana_cost']    = item:GetManaCost()
+        item_msg['cd_remaining'] = item:GetCooldownTimeRemaining()
+        item_msg['cast_range']   = item:GetCastRange()
+        item_msg['damage']		 = item:GetAbilityDamage()
+        items[i] = item_msg
+    end
+    jsonEvent.items = items
 
  --    jsonEvent.currentAbility = ''
  --    if bot:IsCastingAbility then
@@ -151,7 +203,6 @@ function getHeroState(bot)
 end
 
 function getHeroes(unit_type)
-	-- UNIT_LIST_ALLIED_HEROES
 	local heroesMsg = {}
 	local heroes = GetUnitList(unit_type)
 	for i, hero in pairs(heroes) do
@@ -160,28 +211,15 @@ function getHeroes(unit_type)
 	return heroesMsg
 end
 
-function getCreepState(team)
-
-end
-
-function getCreeps(unit_type)
-	local creepMsg = {}
-	local creeps = GetUnitList(unit_type)
-	for i, creep in pairs(creeps) do
-		creepMsg[i] = getCreepState(creep)
-	end
-	return creepMsg
-end
-
 function getState(bot)
 	local jsonEvent = {}
 
 	jsonEvent['hero'] 		 = getHeroState(bot)
 	jsonEvent['ally_hero']   = getHeroes(UNIT_LIST_ALLIED_HEROES)
 	jsonEvent['enemy_hero']  = getHeroes(UNIT_LIST_ENEMY_HEROES)
-	-- jsonEvent['buildings']   = getBuildings()
-	-- jsonEvent['ally_creep']  = getCreeps(UNIT_LIST_ALLIED_CREEPS)
-	-- jsonEvent['enemy_creep'] = getCreeps(UNIT_LIST_ENEMY_CREEPS)
+	jsonEvent['buildings']   = getBuildings()
+	jsonEvent['ally_creep']  = getCreeps(UNIT_LIST_ALLIED_CREEPS)
+	jsonEvent['enemy_creep'] = getCreeps(UNIT_LIST_ENEMY_CREEPS)
 	
 	-- local table = json.decode("...")
 	local json = require "game/dkjson"
