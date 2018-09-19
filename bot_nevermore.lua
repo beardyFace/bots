@@ -12,7 +12,7 @@ function getCreepState(creep)
 	--determine if rax state has changed so we don't send data every single time step
 	local creepState = {}
 	creepState.team = creep:GetTeam()
-	creepState.type = 'rax'
+	creepState.type = 'creep'
 
 	creepState.alive    = creep:IsAlive()
 	creepState.health   = creep:GetHealth()
@@ -48,19 +48,19 @@ end
 function getRaxStates()
 	local raxes = {}
 
-	raxes[0]  = GetBarracks(TEAM_RADIANT, BARRACKS_TOP_MELEE)
-	raxes[1]  = GetBarracks(TEAM_RADIANT, BARRACKS_TOP_RANGED)
-	raxes[2]  = GetBarracks(TEAM_RADIANT, BARRACKS_MID_MELEE)
-	raxes[3]  = GetBarracks(TEAM_RADIANT, BARRACKS_MID_RANGED)
-	raxes[4]  = GetBarracks(TEAM_RADIANT, BARRACKS_BOT_MELEE)
-	raxes[5]  = GetBarracks(TEAM_RADIANT, BARRACKS_BOT_RANGED)
+	raxes[0]  = getRaxState(TEAM_RADIANT, BARRACKS_TOP_MELEE)
+	raxes[1]  = getRaxState(TEAM_RADIANT, BARRACKS_TOP_RANGED)
+	raxes[2]  = getRaxState(TEAM_RADIANT, BARRACKS_MID_MELEE)
+	raxes[3]  = getRaxState(TEAM_RADIANT, BARRACKS_MID_RANGED)
+	raxes[4]  = getRaxState(TEAM_RADIANT, BARRACKS_BOT_MELEE)
+	raxes[5]  = getRaxState(TEAM_RADIANT, BARRACKS_BOT_RANGED)
 
-	raxes[6]  = GetBarracks(TEAM_DIRE, BARRACKS_TOP_MELEE)
-	raxes[7]  = GetBarracks(TEAM_DIRE, BARRACKS_TOP_RANGED)
-	raxes[8]  = GetBarracks(TEAM_DIRE, BARRACKS_MID_MELEE)
-	raxes[9]  = GetBarracks(TEAM_DIRE, BARRACKS_MID_RANGED)
-	raxes[10] = GetBarracks(TEAM_DIRE, BARRACKS_BOT_MELEE)
-	raxes[11] = GetBarracks(TEAM_DIRE, BARRACKS_BOT_RANGED)
+	raxes[6]  = getRaxState(TEAM_DIRE, BARRACKS_TOP_MELEE)
+	raxes[7]  = getRaxState(TEAM_DIRE, BARRACKS_TOP_RANGED)
+	raxes[8]  = getRaxState(TEAM_DIRE, BARRACKS_MID_MELEE)
+	raxes[9]  = getRaxState(TEAM_DIRE, BARRACKS_MID_RANGED)
+	raxes[10] = getRaxState(TEAM_DIRE, BARRACKS_BOT_MELEE)
+	raxes[11] = getRaxState(TEAM_DIRE, BARRACKS_BOT_RANGED)
 
 	return raxes
 end
@@ -111,7 +111,107 @@ function getTowerStates()
 end
 
 function getBuildings()
+	local buildings = {}
+	buildings['towers'] = getTowerStates()
+	buildings['raxes']  = getRaxStates()
+	return buildings
+end
+
+function getItems( bot)
+	local items = {}
+    for i = 0, 5, 1 do
+    	local item = bot:GetItemInSlot(i)
+    	local item_msg = {}
+    	item_msg.name = ""
+    	if item ~= nil then
+	        item_msg.name         = item:GetName()
+	        item_msg.mana_cost    = item:GetManaCost()
+	        item_msg.cd_remaining = item:GetCooldownTimeRemaining()
+	        item_msg.cast_range   = item:GetCastRange()
+	        item_msg.damage		  = item:GetAbilityDamage()
+        end
+        items[i] = item_msg
+    end
+    return items
+end
+
+function GetAvoidanceZoneState(zone)
+	-- { {location, ability, caster, radius }, ... } GetAvoidanceZones() 
+end
+
+function getLinearProjectileState(projectile)
+	-- { {location, caster, player, ability, velocity, radius, handle }, ... } GetLinearProjectiles() 
+	local projectile_msg = {}
+	projectile_msg.location = VectorToArray(projectile.location)
+
+	projectile_msg.caster 	= projectile.caster:GetPlayerID()
+	projectile_msg.team 	= projectile.caster:GetTeam()
 	
+	projectile_msg.velocity = VectorToArray(projectile.velocity)
+	projectile_msg.radius   = projectile.radius
+	
+	projectile_msg.ability    = projectile.ability:GetName()
+	projectile_msg.damage 	  = projectile.ability:GetAbilityDamage()
+	projectile_msg.damageType = projectile.ability:GetDamageType()
+
+	return projectile_msg
+end
+
+function getTrackedProjectileState(projectile)
+	-- { { location, caster, player, ability, is_dodgeable, is_attack }, ... } GetIncomingTrackingProjectiles() 
+	local projectile_msg = {}
+
+	projectile_msg.location     = VectorToArray(projectile.location)
+	
+	projectile_msg.caster 		= projectile.caster:GetPlayerID()
+	projectile_msg.team 		= projectile.caster:GetTeam()
+
+	projectile_msg.isDodgeable  = projectile.is_dodgeable
+	
+	projectile_msg.isAttack     = projectile.is_attack
+	
+	if projectile.is_attack then
+		projectile_msg.damage 		= projectile.caster:GetAttackDamage()
+	else
+		projectile_msg.damage 	  	= projectile.ability:GetAbilityDamage()
+		projectile_msg.damageType 	= projectile.ability:GetDamageType()
+	end
+
+
+	if not projectile.is_attack then
+		projectile_msg.ability    = projectile.ability:GetName()
+	end
+	
+	return projectile_msg
+end
+
+function getProjectiles(bot)
+	local projectiles = {}
+
+	local trackedProjStates = {}
+	local trackProjectiles = bot:GetIncomingTrackingProjectiles()
+	for i, projectile in pairs(trackProjectiles) do
+		trackedProjStates[i] = getTrackedProjectileState(projectile)
+		bot:ActionImmediate_Chat("Tracked", true)
+	end
+	projectiles['tracked'] = trackedProjStates
+
+	local linearProjStates = {}
+	local linearProjectiles = GetLinearProjectiles()
+	for i, projectile in pairs(linearProjectiles) do
+
+		linearProjStates[i] = getLinearProjectileState(projectile)
+	end
+	projectiles['linear'] = linearProjStates
+
+	local avoidanceZoneStates = {}
+	local avoidanceZones = GetAvoidanceZones() 
+	for i, zone in pairs(avoidanceZones) do
+		avoidanceZoneStates[i] = GetAvoidanceZoneState(zone)
+	end
+	projectiles['avoidance'] = avoidanceZoneStates
+
+	return projectiles
 end
 
 function getHeroState(bot)
@@ -126,6 +226,7 @@ function getHeroState(bot)
     jsonEvent.location 		      = VectorToArray(bot:GetLocation())
     jsonEvent.orientation 	      = bot:GetFacing()
     jsonEvent.velocity            = VectorToArray(bot:GetVelocity())
+    jsonEvent.activity 			  = bot:GetAnimActivity()
 
     jsonEvent.health              = bot:GetHealth()
     jsonEvent.maxHealth           = bot:GetMaxHealth()
@@ -151,7 +252,9 @@ function getHeroState(bot)
     jsonEvent.netWorth 		      = bot:GetNetWorth()
 
     --Hero state
+    jsonEvent.isIllusion 		  = bot:IsIllusion()
     jsonEvent.isChanneling 	      = bot:IsChanneling()
+    jsonEvent.isCastingAbility    = bot:IsCastingAbility()
     jsonEvent.isUsingAbility      = bot:IsUsingAbility()
     jsonEvent.isAttackImmune      = bot:IsAttackImmune()
     jsonEvent.isBlind 		      = bot:IsBlind()
@@ -169,37 +272,20 @@ function getHeroState(bot)
     jsonEvent.isSpeciallyDeniable = bot:IsSpeciallyDeniable() 
     jsonEvent.isStunned 		  = bot:IsStunned()
     jsonEvent.isUnableToMiss 	  = bot:IsUnableToMiss()
+    
+    jsonEvent.items = getItems(bot)
 
-    local items = {}
-    for i = 0, 5, 1 do
-    	item = bot:GetItemInSlot(i)
-    	item_msg = {}
-        item_msg['name']         = item:GetName()
-        item_msg['mana_cost']    = item:GetManaCost()
-        item_msg['cd_remaining'] = item:GetCooldownTimeRemaining()
-        item_msg['cast_range']   = item:GetCastRange()
-        item_msg['damage']		 = item:GetAbilityDamage()
-        items[i] = item_msg
+    jsonEvent.currentAbility = ''
+    if bot:IsCastingAbility() then
+    	local ability = bit:GetCurrentActiveAbility()
+    	local ability_msg ={}
+    	ability_msg.name = ability:GetName()
+    	jsonEvent.currentAbility = ability_msg
     end
-    jsonEvent.items = items
 
- --    jsonEvent.currentAbility = ''
- --    if bot:IsCastingAbility then
- --    	ability = bit:GetCurrentActiveAbility()
- --    	jsonEvent.currentAbility = ability
- --    end
+    jsonEvent.incomingProjectiles = getProjectiles(bot)
 
-	-- local trackProjectiles = npcBot:GetIncomingTrackingProjectiles()
-	-- for i, projectile in pairs(trackProjectiles) do
-	-- 	jsonEvent.incomingProjectiles[i] = projectile
-	-- end
-
-	local json = require "game/dkjson"
-
-	-- local table = json.decode("...")
-	local string = json.encode(jsonEvent)
-
-	return string
+	return jsonEvent
 end
 
 function getHeroes(unit_type)
@@ -230,17 +316,22 @@ end
 function Think()
  
     local npcBot = GetBot();--hUnit
+
+    local angle = math.rad(math.fmod(npcBot:GetFacing()+30, 360)); -- Calculate next position's angle
+	local newLocation = Vector(fountainLocation.x+fountainRadius*math.cos(angle), fountainLocation.y+fountainRadius*math.sin(angle), fountainLocation.z);
+	npcBot:Action_MoveToLocation(newLocation);
+	DebugDrawLine(fountainLocation, newLocation, 255, 0, 0);
  	
     local badProjectiles = GetLinearProjectiles()
     for _, projectile in pairs(badProjectiles) do
 		DebugDrawCircle(projectile.location, projectile.radius, 255, 0 , 0)
-		npcBot:ActionImmediate_Chat("Linear", true)
+		-- npcBot:ActionImmediate_Chat("Linear", true)
 	end
 
 	local trackProjectiles = npcBot:GetIncomingTrackingProjectiles()
 	for _, projectile in pairs(trackProjectiles) do
 		DebugDrawCircle(projectile.location, 30, 255, 255 , 0)
-		npcBot:ActionImmediate_Chat("Tracking", true)
+		-- npcBot:ActionImmediate_Chat("Tracking", true)
 	end
  	
  	-- local chat = baseURL .. "/CreepBlockAI/model"
@@ -264,12 +355,7 @@ function Think()
 				)
 
 	if reply ~= nil then
-		npcBot:ActionImmediate_Chat("Replied: ", false)	
+		-- npcBot:ActionImmediate_Chat("Replied: ", false)	
 		reply = nil
 	end
 end 
-
--- local angle = math.rad(math.fmod(npcBot:GetFacing()+30, 360)); -- Calculate next position's angle
--- local newLocation = Vector(fountainLocation.x+fountainRadius*math.cos(angle), fountainLocation.y+fountainRadius*math.sin(angle), fountainLocation.z);
--- npcBot:Action_MoveToLocation(newLocation);
--- DebugDrawLine(fountainLocation, newLocation, 255, 0, 0);
