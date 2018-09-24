@@ -3,6 +3,7 @@ local fountainRadius = 400.0;
 
 local baseURL = ":5000"
 local reply
+local sendSate = true
 
 function VectorToArray(v)
 	return {v.x, v.y, v.z}
@@ -297,9 +298,23 @@ function getHeroes(unit_type)
 	return heroesMsg
 end
 
+function getWorldBounds()
+	local worldBounds = {}
+	-- Returns a table containing the min X, min Y, max X, and max Y bounds of the world.
+	local bounds = GetWorldBounds() 
+
+	worldBounds.minX = bounds[1]
+	worldBounds.minY = bounds[2]
+	worldBounds.maxX = bounds[3]
+	worldBounds.maxY = bounds[4]
+
+	return worldBounds
+end
+
 function getState(bot)
 	local jsonEvent = {}
 
+	jsonEvent['bounds']		 = getWorldBounds()
 	jsonEvent['hero'] 		 = getHeroState(bot)
 	jsonEvent['ally_hero']   = getHeroes(UNIT_LIST_ALLIED_HEROES)
 	jsonEvent['enemy_hero']  = getHeroes(UNIT_LIST_ENEMY_HEROES)
@@ -336,26 +351,29 @@ function Think()
  	
  	-- local chat = baseURL .. "/CreepBlockAI/model"
  	-- npcBot:ActionImmediate_Chat(chat, true)
- 	local request = CreateHTTPRequest(baseURL .. "/update")
- 	
- 	local jsonMsg = getState(npcBot)
+ 	if sendSate then
+ 		sendSate = false
+	 	local request = CreateHTTPRequest(baseURL .. "/update")
+	 	
+	 	local jsonMsg = getState(npcBot)
 
- 	request:SetHTTPRequestRawPostBody('application/json', jsonMsg)
-	request:Send( 	
-					function( result ) 
-						if result["StatusCode"] == 200 then
-						-- 	-- local data = package.loaded['game/dkjson'].decode(result['Body'])
-						-- 	npcBot:ActionImmediate_Chat("Loaded Latest Model", true)								
-						-- else
-						-- 	npcBot:ActionImmediate_Chat("Failed", true)								
-							reply = result
-							print(result)
-						end
-					end 
-				)
-
+	 	request:SetHTTPRequestRawPostBody('application/json', jsonMsg)
+		request:Send( 	
+						function( result ) 
+							if result["StatusCode"] == 200 then
+							-- 	-- local data = package.loaded['game/dkjson'].decode(result['Body'])
+							-- 	npcBot:ActionImmediate_Chat("Loaded Latest Model", true)								
+							-- else
+							-- 	npcBot:ActionImmediate_Chat("Failed", true)								
+								reply = result
+								print(result)
+							end
+						end 
+					)
+	end
 	if reply ~= nil then
 		-- npcBot:ActionImmediate_Chat("Replied: ", false)	
 		reply = nil
+		sendSate = true
 	end
 end 
