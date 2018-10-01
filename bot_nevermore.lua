@@ -5,28 +5,21 @@ local baseURL = ":5000"
 local reply
 local sendSate = true
 
+local HERO   = 0
+local CREEP  = 1
+local TOWER  = 2
+local RAX    = 3
+local THRONE = 4
+
 function VectorToArray(v)
 	return {v.x, v.y, v.z}
-end
-
-function getCreepState(creep)
-	--determine if rax state has changed so we don't send data every single time step
-	local creepState = {}
-	creepState.team = creep:GetTeam()
-	creepState.type = 'creep'
-
-	creepState.alive    = creep:IsAlive()
-	creepState.health   = creep:GetHealth()
-	creepState.location = VectorToArray(creep:GetLocation())--wont change, maybe send once?
-
-	return creepState
 end
 
 function getCreeps(unit_type)
 	local creepMsg = {}
 	local creeps = GetUnitList(unit_type)
 	for i, creep in pairs(creeps) do
-		creepMsg[i] = getCreepState(creep)
+		creepMsg[i] = getUnitState(creep)
 	end
 	return creepMsg
 end
@@ -35,13 +28,7 @@ function getRaxState(team, rax_id)
 	--determine if rax state has changed so we don't send data every single time step
 	local rax = GetBarracks(team, rax_id)--hUnit
 
-	local raxState = {}
-	raxState.team = rax:GetTeam()
-	raxState.type = 'rax'
-
-	raxState.alive    = rax:IsAlive()
-	raxState.health   = rax:GetHealth()
-	raxState.location = VectorToArray(rax:GetLocation())--wont change, maybe send once?
+	local raxState = getUnitState(rax)
 
 	return raxState
 end
@@ -69,13 +56,7 @@ end
 function getTowerState(team, tower_id)
 	local tower = GetTower(team, tower_id)--hUnit
 
-	local towerState = {}
-	towerState.team = tower:GetTeam()
-	towerState.type = 'tower'
-
-	towerState.alive    = tower:IsAlive()
-	towerState.health   = tower:GetHealth()
-	towerState.location = VectorToArray(tower:GetLocation())--wont change, maybe send once?
+	local towerState = getUnitState(tower)
 
 	return towerState
 end
@@ -149,7 +130,7 @@ function getLinearProjectileState(projectile)
 	projectile_msg.team 	= projectile.caster:GetTeam()
 	
 	projectile_msg.velocity = VectorToArray(projectile.velocity)
-	projectile_msg.radius   = projectile.radius
+	projectile_msg.boundingRadius = projectile.radius
 	
 	projectile_msg.ability    = projectile.ability:GetName()
 	projectile_msg.damage 	  = projectile.ability:GetAbilityDamage()
@@ -167,6 +148,7 @@ function getTrackedProjectileState(projectile)
 	projectile_msg.caster 		= projectile.caster:GetPlayerID()
 	projectile_msg.team 		= projectile.caster:GetTeam()
 
+	projectile_msg.boundingRadius = 30
 	projectile_msg.isDodgeable  = projectile.is_dodgeable
 	
 	projectile_msg.isAttack     = projectile.is_attack
@@ -176,11 +158,7 @@ function getTrackedProjectileState(projectile)
 	else
 		projectile_msg.damage 	  	= projectile.ability:GetAbilityDamage()
 		projectile_msg.damageType 	= projectile.ability:GetDamageType()
-	end
-
-
-	if not projectile.is_attack then
-		projectile_msg.ability    = projectile.ability:GetName()
+		projectile_msg.ability    	= projectile.ability:GetName()
 	end
 	
 	return projectile_msg
@@ -215,76 +193,98 @@ function getProjectiles(bot)
 	return projectiles
 end
 
-function getHeroState(bot)
+function getType(unit)
+	if unit:IsHero() then
+		return HERO
+	elseif unit:IsCreep() then
+		return CREEP
+	elseif unit:IsTower() then
+		return TOWER
+	elseif unit:IsBuilding() then
+		return RAX
+	end
+	return THRONE
+end
+
+function convertTeam(unit)
+	if GetBot():GetTeam() == unit:GetTeam() then
+		return 1
+	end
+	return 0 
+end
+
+function getUnitState(unit)
 	local jsonEvent = {}
-	jsonEvent.team = bot:GetTeam()
-    jsonEvent.id   = bot:GetPlayerID() 
-    jsonEvent.type = 'hero'
+	jsonEvent.team = convertTeam(unit)
+    jsonEvent.id   = unit:GetPlayerID() 
+    jsonEvent.type = getType(unit)
 
     ----Hero stats
-    jsonEvent.alive 	          = bot:IsAlive()
-    jsonEvent.level 		      = bot:GetLevel()
-    jsonEvent.location 		      = VectorToArray(bot:GetLocation())
-    jsonEvent.orientation 	      = bot:GetFacing()
-    jsonEvent.velocity            = VectorToArray(bot:GetVelocity())
-    jsonEvent.activity 			  = bot:GetAnimActivity()
+    jsonEvent.alive 	          = unit:IsAlive()
+    jsonEvent.level 		      = unit:GetLevel()
+    jsonEvent.location 		      = VectorToArray(unit:GetLocation())
+    jsonEvent.orientation 	      = unit:GetFacing()
+    jsonEvent.velocity            = VectorToArray(unit:GetVelocity())
+    jsonEvent.activity 			  = unit:GetAnimActivity()
 
-    jsonEvent.health              = bot:GetHealth()
-    jsonEvent.maxHealth           = bot:GetMaxHealth()
-    jsonEvent.healthRegen         = bot:GetHealthRegen()
+    jsonEvent.health              = unit:GetHealth()
+    jsonEvent.maxHealth           = unit:GetMaxHealth()
+    jsonEvent.healthRegen         = unit:GetHealthRegen()
     
-    jsonEvent.mana 		          = bot:GetMana()
-    jsonEvent.maxMana             = bot:GetMaxMana()
-    jsonEvent.manaRegen           = bot:GetManaRegen()
+    jsonEvent.mana 		          = unit:GetMana()
+    jsonEvent.maxMana             = unit:GetMaxMana()
+    jsonEvent.manaRegen           = unit:GetManaRegen()
 
-    jsonEvent.moveSpeed           = bot:GetCurrentMovementSpeed()
-    jsonEvent.visionRange         = bot:GetCurrentVisionRange()
-    jsonEvent.boundingRadius      = bot:GetBoundingRadius()
+    jsonEvent.moveSpeed           = unit:GetCurrentMovementSpeed()
+    jsonEvent.visionRange         = unit:GetCurrentVisionRange()
+    jsonEvent.boundingRadius      = unit:GetBoundingRadius()
 
-    jsonEvent.attackDamage        = bot:GetAttackDamage()
-    jsonEvent.attackRange         = bot:GetAttackRange()
-    jsonEvent.attackSpeed         = bot:GetAttackSpeed()
-    jsonEvent.attackProjSpeed     = bot:GetAttackProjectileSpeed()
+    jsonEvent.attackDamage        = unit:GetAttackDamage()
+    jsonEvent.attackRange         = unit:GetAttackRange()
+    jsonEvent.attackSpeed         = unit:GetAttackSpeed()
+    jsonEvent.attackProjSpeed     = unit:GetAttackProjectileSpeed()
 
-    jsonEvent.spellAmp		      = bot:GetSpellAmp()
-    jsonEvent.armor 		      = bot:GetArmor()
-    jsonEvent.magicResist         = bot:GetMagicResist()
-    jsonEvent.evasion             = bot:GetEvasion()
-    jsonEvent.netWorth 		      = bot:GetNetWorth()
+    jsonEvent.spellAmp		      = unit:GetSpellAmp()
+    jsonEvent.armor 		      = unit:GetArmor()
+    jsonEvent.magicResist         = unit:GetMagicResist()
+    jsonEvent.evasion             = unit:GetEvasion()
+    jsonEvent.netWorth 		      = unit:GetNetWorth()
 
     --Hero state
-    jsonEvent.isIllusion 		  = bot:IsIllusion()
-    jsonEvent.isChanneling 	      = bot:IsChanneling()
-    jsonEvent.isCastingAbility    = bot:IsCastingAbility()
-    jsonEvent.isUsingAbility      = bot:IsUsingAbility()
-    jsonEvent.isAttackImmune      = bot:IsAttackImmune()
-    jsonEvent.isBlind 		      = bot:IsBlind()
-    jsonEvent.isBlockDisabled     = bot:IsBlockDisabled()
-    jsonEvent.isDisarmed          = bot:IsDisarmed()
-    jsonEvent.isEvadeDisabled     = bot:IsEvadeDisabled()
-    jsonEvent.isHexed             = bot:IsHexed()
-    jsonEvent.isInvisible         = bot:IsInvisible()
-    jsonEvent.isInvulnerable      = bot:IsInvulnerable()
-    jsonEvent.isMagicImmune       = bot:IsMagicImmune()
-    jsonEvent.isMuted 		      = bot:IsMuted()
-    jsonEvent.isNightmared        = bot:IsNightmared()
-    jsonEvent.isRooted 		      = bot:IsRooted()
-    jsonEvent.isSilenced          = bot:IsSilenced()
-    jsonEvent.isSpeciallyDeniable = bot:IsSpeciallyDeniable() 
-    jsonEvent.isStunned 		  = bot:IsStunned()
-    jsonEvent.isUnableToMiss 	  = bot:IsUnableToMiss()
+    jsonEvent.isIllusion 		  = unit:IsIllusion()
+    jsonEvent.isChanneling 	      = unit:IsChanneling()
+    jsonEvent.isCastingAbility    = unit:IsCastingAbility()
+    jsonEvent.isUsingAbility      = unit:IsUsingAbility()
+    jsonEvent.isAttackImmune      = unit:IsAttackImmune()
+    jsonEvent.isBlind 		      = unit:IsBlind()
+    jsonEvent.isBlockDisabled     = unit:IsBlockDisabled()
+    jsonEvent.isDisarmed          = unit:IsDisarmed()
+    jsonEvent.isEvadeDisabled     = unit:IsEvadeDisabled()
+    jsonEvent.isHexed             = unit:IsHexed()
+    jsonEvent.isInvisible         = unit:IsInvisible()
+    jsonEvent.isInvulnerable      = unit:IsInvulnerable()
+    jsonEvent.isMagicImmune       = unit:IsMagicImmune()
+    jsonEvent.isMuted 		      = unit:IsMuted()
+    jsonEvent.isNightmared        = unit:IsNightmared()
+    jsonEvent.isRooted 		      = unit:IsRooted()
+    jsonEvent.isSilenced          = unit:IsSilenced()
+    jsonEvent.isSpeciallyDeniable = unit:IsSpeciallyDeniable() 
+    jsonEvent.isStunned 		  = unit:IsStunned()
+    jsonEvent.isUnableToMiss 	  = unit:IsUnableToMiss()
     
-    jsonEvent.items = getItems(bot)
+    if getType(unit) == HERO then
+    	jsonEvent.items = getItems(unit)
+	
+	    jsonEvent.currentAbility = ''
+	    if unit:IsCastingAbility() then
+	    	local ability = unit:GetCurrentActiveAbility()
+	    	local ability_msg ={}
+	    	ability_msg.name = ability:GetName()
+	    	jsonEvent.currentAbility = ability_msg
+	    end
 
-    jsonEvent.currentAbility = ''
-    if bot:IsCastingAbility() then
-    	local ability = bit:GetCurrentActiveAbility()
-    	local ability_msg ={}
-    	ability_msg.name = ability:GetName()
-    	jsonEvent.currentAbility = ability_msg
+	    jsonEvent.incomingProjectiles = getProjectiles(unit)
     end
-
-    jsonEvent.incomingProjectiles = getProjectiles(bot)
 
 	return jsonEvent
 end
@@ -293,7 +293,7 @@ function getHeroes(unit_type)
 	local heroesMsg = {}
 	local heroes = GetUnitList(unit_type)
 	for i, hero in pairs(heroes) do
-		heroesMsg[i] = getHeroState(hero)
+		heroesMsg[i] = getUnitState(hero)
 	end
 	return heroesMsg
 end
@@ -315,7 +315,7 @@ function getState(bot)
 	local jsonEvent = {}
 
 	jsonEvent['bounds']		 = getWorldBounds()
-	jsonEvent['hero'] 		 = getHeroState(bot)
+	-- jsonEvent['hero'] 		 = getUnitState(bot)
 	jsonEvent['ally_hero']   = getHeroes(UNIT_LIST_ALLIED_HEROES)
 	jsonEvent['enemy_hero']  = getHeroes(UNIT_LIST_ENEMY_HEROES)
 	jsonEvent['buildings']   = getBuildings()
